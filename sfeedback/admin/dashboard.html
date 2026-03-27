@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — KJU Student Feedback</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body { margin: 0; cursor: none; }
+    @media(max-width:768px) { body { cursor: auto; } }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+  <canvas id="glitterCanvas"></canvas>
+  <div class="bg-particles" id="bgParticles"></div>
+  <div class="noise"></div>
+  <div class="scanlines"></div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title" id="modalTitle">CONFIRM</h2>
+      <p class="modal-msg" id="modalMsg">Are you sure?</p>
+      <div class="modal-btns">
+        <button class="btn-cancel" id="modalCancel">Cancel</button>
+        <button class="btn-confirm" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none;"></div>
+
+  <div class="admin-shell">
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-logo logo-block">
+          <div class="logo-icon" style="width:36px;height:36px;">
+            <svg width="26" height="26" viewBox="0 0 36 36" fill="none">
+              <rect x="2" y="2" width="32" height="32" rx="4" stroke="#e63946" stroke-width="2"/>
+              <path d="M8 18h4l3-7 4 14 3-7h6" stroke="#e63946" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <span class="logo-main" style="font-size:1.1rem;">KJU ADMIN</span>
+            <span class="logo-sub">FEEDBACK DASHBOARD</span>
+          </div>
+        </div>
+        <nav class="topbar-nav">
+          <span class="nav-link active">Dashboard</span>
+          <a class="nav-link" href="../index.html">&#8592; Feedback Form</a>
+          <button class="nav-link danger" id="clearAllBtn">&#10005; Clear All</button>
+        </nav>
+        <div class="topbar-user">
+          <div class="user-dot"></div>
+          <span>LIVE</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <h1 class="page-title reveal-up">FEEDBACK DASHBOARD</h1>
+      <p class="page-sub reveal-up" id="pageSubtitle" style="animation-delay:0.05s;">// KRISTU JAYANTI DEEMED TO BE UNIVERSITY</p>
+
+      <!-- Stats -->
+      <div class="stats-row reveal-up" id="statsRow" style="animation-delay:0.1s;">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <path d="M8 34l10-12 7 7 9-14 7 10" stroke="#e63946" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-key">Total Responses</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <path d="M22 6l4.4 8.9 9.8 1.4-7.1 6.9 1.7 9.8L22 28l-8.8 5 1.7-9.8-7.1-6.9 9.8-1.4z" stroke="#e63946" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="stat-value" id="statAvg">&#8212;</div>
+          <div class="stat-key">Average Rating</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <rect x="10" y="16" width="24" height="22" rx="2" stroke="#e63946" stroke-width="1.5"/>
+              <path d="M16 16V12a6 6 0 0112 0v4" stroke="#e63946" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="22" cy="27" r="2" fill="#e63946"/>
+            </svg>
+          </div>
+          <div class="stat-value" id="statBest" style="font-size:1rem;padding-top:8px;line-height:1.2;color:var(--text);">&#8212;</div>
+          <div class="stat-key">Top Rated Event</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <circle cx="22" cy="22" r="14" stroke="#e63946" stroke-width="1.5"/>
+              <path d="M22 15v8l5 5" stroke="#e63946" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="stat-value" id="statLatest" style="font-size:1.1rem;padding-top:6px;color:var(--text);">&#8212;</div>
+          <div class="stat-key">Latest Submission</div>
+        </div>
+      </div>
+
+      <!-- Charts Grid (shown when data exists) -->
+      <div class="charts-grid reveal-up" id="chartsGrid" style="animation-delay:0.15s; display:none;">
+
+        <div class="chart-card">
+          <div class="chart-title">RATING DISTRIBUTION</div>
+          <div class="chart-sub">// 1&#9733; TO 5&#9733; RESPONSE COUNT</div>
+          <div class="chart-area">
+            <canvas id="chartRatingDist"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">AVG RATING PER EVENT</div>
+          <div class="chart-sub">// MEAN SCORE OUT OF 5</div>
+          <div class="chart-area">
+            <canvas id="chartAvgRating"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">SUBMISSIONS PER EVENT</div>
+          <div class="chart-sub">// TOTAL RESPONSE COUNT BY EVENT</div>
+          <div class="chart-area">
+            <canvas id="chartSubmissions"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">RATINGS BY EVENT</div>
+          <div class="chart-sub">// GROUPED 1&#9733;&#8211;5&#9733; COUNT PER EVENT</div>
+          <div class="chart-area tall">
+            <canvas id="chartGrouped"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts empty placeholder -->
+      <div id="chartsEmpty" class="chart-card reveal-up" style="animation-delay:0.15s; text-align:center; padding:48px 24px; margin-bottom:48px; display:none;">
+        <div style="opacity:0.25; margin-bottom:14px;">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="6" y="28" width="8" height="14" rx="1" stroke="#555" stroke-width="1.5"/>
+            <rect x="20" y="18" width="8" height="24" rx="1" stroke="#555" stroke-width="1.5"/>
+            <rect x="34" y="8" width="8" height="34" rx="1" stroke="#555" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <p style="font-family:var(--mono); font-size:0.68rem; color:var(--muted); letter-spacing:0.08em;">// CHARTS WILL APPEAR ONCE FEEDBACK IS SUBMITTED</p>
+      </div>
+
+      <!-- All Feedback Table -->
+      <h2 class="section-title reveal-up" style="animation-delay:0.2s;">ALL FEEDBACK</h2>
+
+      <div class="controls-bar reveal-up" style="animation-delay:0.25s;">
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <input type="text" class="search-box" id="searchBox" placeholder="Search name or ID&#8230;"/>
+        </div>
+        <select class="filter-select" id="filterEvent">
+          <option value="">All Events</option>
+        </select>
+        <select class="filter-select" id="filterRating">
+          <option value="">All Ratings</option>
+          <option value="5">5 &#9733; Excellent</option>
+          <option value="4">4 &#9733; Very Good</option>
+          <option value="3">3 &#9733; Good</option>
+          <option value="2">2 &#9733; Fair</option>
+          <option value="1">1 &#9733; Poor</option>
+        </select>
+        <div class="controls-right">
+          <button class="btn-outline" id="exportBtn">&#8595; Export CSV</button>
+        </div>
+      </div>
+
+      <div class="table-wrap reveal-up" style="animation-delay:0.3s;">
+        <div class="table-inner">
+          <table id="feedbackTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-sort="name">Student Name <span class="sort-arrow">&#8597;</span></th>
+                <th>Student ID</th>
+                <th data-sort="event">Event <span class="sort-arrow">&#8597;</span></th>
+                <th data-sort="rating">Rating <span class="sort-arrow">&#8597;</span></th>
+                <th data-sort="timestamp">Submitted <span class="sort-arrow">&#8597;</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">
+          <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+            <rect x="8" y="12" width="44" height="36" rx="3" stroke="#555" stroke-width="1.5"/>
+            <path d="M20 24h20M20 30h14M20 36h8" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 id="emptyTitle">NO FEEDBACK YET</h3>
+        <p id="emptyMsg">// RESPONSES FROM THE FORM WILL APPEAR HERE</p>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Chart.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="../assets/js/glitter.js"></script>
+  <script>
+  // ============================================================
+  // KJU Admin Dashboard — Data + Charts + Table
+  // ============================================================
+
+  var ratingWords = ['','Poor','Fair','Good','Very Good','Excellent'];
+  var starSyms    = ['','★☆☆☆☆','★★☆☆☆','★★★☆☆','★★★★☆','★★★★★'];
+
+  // Chart.js global dark-theme defaults
+  Chart.defaults.color        = '#555555';
+  Chart.defaults.borderColor  = '#222222';
+  Chart.defaults.font.family  = "'JetBrains Mono', monospace";
+  Chart.defaults.font.size    = 10;
+
+  var RATING_BG = [
+    'rgba(230,57,70,0.70)',
+    'rgba(251,146,60,0.70)',
+    'rgba(251,191,36,0.70)',
+    'rgba(134,239,172,0.70)',
+    'rgba(74,222,128,0.70)'
+  ];
+  var RATING_BORDER = [
+    'rgba(230,57,70,1)',
+    'rgba(251,146,60,1)',
+    'rgba(251,191,36,1)',
+    'rgba(134,239,172,1)',
+    'rgba(74,222,128,1)'
+  ];
+
+  var TOOLTIP_OPTS = {
+    backgroundColor: '#161616',
+    borderColor:     '#333333',
+    borderWidth:     1,
+    titleColor:      '#f0f0f0',
+    bodyColor:       '#888888',
+    padding:         10
+  };
+
+  var SCALE_OPTS = {
+    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#555', font: { size: 9 }, maxRotation: 35 } },
+    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#555', font: { size: 9 } }, beginAtZero: true }
+  };
+
+  // ── State ────────────────────────────────────
+  var allData    = [];
+  var sortKey    = 'timestamp';
+  var sortDir    = -1;
+  var filterEvt  = '';
+  var filterRate = '';
+  var searchQ    = '';
+  var charts     = {};
+
+  // ── Storage ──────────────────────────────────
+  function loadData() {
+    try { allData = JSON.parse(localStorage.getItem('gw_feedback') || '[]'); }
+    catch(e) { allData = []; }
+  }
+  function saveData() {
+    localStorage.setItem('gw_feedback', JSON.stringify(allData));
+  }
+
+  // ── Animated Counter ─────────────────────────
+  function animateCounter(el, target, suffix, duration) {
+    if (!el) return;
+    if (isNaN(target) || target === 0) { el.innerHTML = '0' + suffix; return; }
+    var start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / duration, 1);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.innerHTML = Math.round(e * target) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── Stats ─────────────────────────────────────
+  function renderStats() {
+    var total = allData.length;
+    var sub = document.getElementById('pageSubtitle');
+    if (sub) sub.textContent = '// KRISTU JAYANTI \u2014 ' + total + ' TOTAL RESPONSE' + (total !== 1 ? 'S' : '');
+
+    animateCounter(document.getElementById('statTotal'), total, '', 800);
+
+    var avgEl    = document.getElementById('statAvg');
+    var bestEl   = document.getElementById('statBest');
+    var latestEl = document.getElementById('statLatest');
+
+    if (total === 0) {
+      if (avgEl)    avgEl.textContent    = '\u2014';
+      if (bestEl)   bestEl.textContent   = '\u2014';
+      if (latestEl) latestEl.textContent = '\u2014';
+      return;
+    }
+
+    // Average
+    var avg = allData.reduce(function(s,r){ return s + r.rating; }, 0) / total;
+    if (avgEl) {
+      var startAvg = null;
+      (function stepAvg(ts) {
+        if (!startAvg) startAvg = ts;
+        var p = Math.min((ts - startAvg) / 800, 1);
+        var e = 1 - Math.pow(1 - p, 3);
+        avgEl.innerHTML = (e * avg).toFixed(1) + '<span class="unit">/5</span>';
+        if (p < 1) requestAnimationFrame(stepAvg);
+      })(performance.now());
+    }
+
+    // Best event
+    var evMap = {};
+    allData.forEach(function(r) {
+      if (!evMap[r.event]) evMap[r.event] = [];
+      evMap[r.event].push(r.rating);
+    });
+    var bestEv = '', bestAvg = 0;
+    Object.keys(evMap).forEach(function(ev) {
+      var arr = evMap[ev];
+      var a = arr.reduce(function(s,v){ return s+v; }, 0) / arr.length;
+      if (a > bestAvg) { bestAvg = a; bestEv = ev; }
+    });
+    var shortEv = bestEv.split('\u2013')[0].split('2024')[0].split('2025')[0].trim();
+    if (bestEl) bestEl.textContent = shortEv || '\u2014';
+
+    // Latest
+    if (latestEl && allData[0]) {
+      var latest  = new Date(allData[0].timestamp);
+      var now     = new Date();
+      var diffMin = Math.floor((now - latest) / 60000);
+      var diffH   = Math.floor(diffMin / 60);
+      var diffD   = Math.floor(diffH / 24);
+      latestEl.textContent = diffMin < 1   ? 'Just now'
+                           : diffMin < 60  ? diffMin + 'm ago'
+                           : diffH < 24    ? diffH + 'h ago'
+                           : diffD + 'd ago';
+    }
+  }
+
+  // ── Chart helpers ─────────────────────────────
+  function destroyChart(id) {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  }
+
+  function makeChart(id, config) {
+    destroyChart(id);
+    var el = document.getElementById(id);
+    if (!el) return;
+    charts[id] = new Chart(el, config);
+  }
+
+  function shortName(ev) {
+    var s = ev.split('\u2013')[0].split('2024')[0].split('2025')[0].trim();
+    return s.length > 20 ? s.substring(0, 18) + '\u2026' : s;
+  }
+
+  // ── Chart 1: Rating Distribution ──────────────
+  function buildChartRatingDist() {
+    var counts = [0,0,0,0,0]; // index 0 = 1★
+    allData.forEach(function(r){ if (r.rating >= 1 && r.rating <= 5) counts[r.rating-1]++; });
+    makeChart('chartRatingDist', {
+      type: 'bar',
+      data: {
+        labels: ['1\u2605 Poor','2\u2605 Fair','3\u2605 Good','4\u2605 V.Good','5\u2605 Excellent'],
+        datasets: [{
+          label: 'Responses',
+          data: counts,
+          backgroundColor: RATING_BG,
+          borderColor:     RATING_BORDER,
+          borderWidth: 1,
+          borderRadius: 3,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: Object.assign({}, TOOLTIP_OPTS, {
+            callbacks: {
+              label: function(ctx) { return ' ' + ctx.raw + ' response' + (ctx.raw !== 1 ? 's' : ''); }
+            }
+          })
+        },
+        scales: SCALE_OPTS
+      }
+    });
+  }
+
+  // ── Chart 2: Avg Rating per Event ─────────────
+  function buildChartAvgRating() {
+    var evMap = {};
+    allData.forEach(function(r) {
+      if (!evMap[r.event]) evMap[r.event] = [];
+      evMap[r.event].push(r.rating);
+    });
+    var events = Object.keys(evMap).sort();
+    var avgs   = events.map(function(ev) {
+      var arr = evMap[ev];
+      return parseFloat((arr.reduce(function(s,v){ return s+v; },0) / arr.length).toFixed(2));
+    });
+    var bgColors = avgs.map(function(v) {
+      if (v >= 4.5) return 'rgba(74,222,128,0.70)';
+      if (v >= 3.5) return 'rgba(134,239,172,0.70)';
+      if (v >= 2.5) return 'rgba(251,191,36,0.70)';
+      if (v >= 1.5) return 'rgba(251,146,60,0.70)';
+      return 'rgba(230,57,70,0.70)';
+    });
+    makeChart('chartAvgRating', {
+      type: 'bar',
+      data: {
+        labels: events.map(shortName),
+        datasets: [{
+          label: 'Avg Rating',
+          data: avgs,
+          backgroundColor: bgColors,
+          borderColor: bgColors.map(function(c){ return c.replace('0.70','1'); }),
+          borderWidth: 1,
+          borderRadius: 3,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: Object.assign({}, TOOLTIP_OPTS, {
+            callbacks: {
+              title: function(items) { return events[items[0].dataIndex]; },
+              label: function(ctx)   { return ' Avg: ' + ctx.raw + ' / 5'; }
+            }
+          })
+        },
+        scales: Object.assign({}, SCALE_OPTS, {
+          y: Object.assign({}, SCALE_OPTS.y, { min: 0, max: 5 })
+        })
+      }
+    });
+  }
+
+  // ── Chart 3: Submissions per Event ────────────
+  function buildChartSubmissions() {
+    var evMap = {};
+    allData.forEach(function(r) { evMap[r.event] = (evMap[r.event] || 0) + 1; });
+    var events = Object.keys(evMap).sort();
+    var counts = events.map(function(ev) { return evMap[ev]; });
+    var maxC   = Math.max.apply(null, counts.concat([1]));
+    var bgColors = counts.map(function(c) {
+      return 'rgba(230,57,70,' + (0.28 + 0.60 * (c / maxC)).toFixed(2) + ')';
+    });
+    makeChart('chartSubmissions', {
+      type: 'bar',
+      data: {
+        labels: events.map(shortName),
+        datasets: [{
+          label: 'Submissions',
+          data: counts,
+          backgroundColor: bgColors,
+          borderColor: 'rgba(230,57,70,0.9)',
+          borderWidth: 1,
+          borderRadius: 3,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: Object.assign({}, TOOLTIP_OPTS, {
+            callbacks: {
+              title: function(items) { return events[items[0].dataIndex]; },
+              label: function(ctx)   { return ' ' + ctx.raw + ' submission' + (ctx.raw !== 1 ? 's' : ''); }
+            }
+          })
+        },
+        scales: SCALE_OPTS
+      }
+    });
+  }
+
+  // ── Chart 4: Grouped Ratings per Event ────────
+  function buildChartGrouped() {
+    var evMap = {};
+    allData.forEach(function(r) {
+      if (!evMap[r.event]) evMap[r.event] = {1:0,2:0,3:0,4:0,5:0};
+      evMap[r.event][r.rating]++;
+    });
+    var events = Object.keys(evMap).sort();
+    var datasets = [1,2,3,4,5].map(function(star) {
+      return {
+        label: star + '\u2605 ' + ratingWords[star],
+        data: events.map(function(ev) { return evMap[ev][star] || 0; }),
+        backgroundColor: RATING_BG[star-1],
+        borderColor:     RATING_BORDER[star-1],
+        borderWidth: 1,
+        borderRadius: 2,
+        borderSkipped: false
+      };
+    });
+    makeChart('chartGrouped', {
+      type: 'bar',
+      data: { labels: events.map(shortName), datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { color: '#555', font: { size: 9 }, boxWidth: 10, padding: 10 }
+          },
+          tooltip: Object.assign({}, TOOLTIP_OPTS, {
+            callbacks: {
+              title: function(items) { return events[items[0].dataIndex]; }
+            }
+          })
+        },
+        scales: SCALE_OPTS
+      }
+    });
+  }
+
+  // ── Render / hide charts ──────────────────────
+  function renderCharts() {
+    var grid  = document.getElementById('chartsGrid');
+    var empty = document.getElementById('chartsEmpty');
+    if (!grid || !empty) return;
+    if (allData.length === 0) {
+      grid.style.display  = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    grid.style.display  = 'grid';
+    empty.style.display = 'none';
+    requestAnimationFrame(function() {
+      buildChartRatingDist();
+      buildChartAvgRating();
+      buildChartSubmissions();
+      buildChartGrouped();
+    });
+  }
+
+  // ── Rating Bars (hidden legacy — kept so renderRatingBars() call doesn't break) ──
+  function renderRatingBars() {
+    var container = document.getElementById('ratingBars');
+    if (!container) return;
+    var total  = allData.length;
+    var counts = {5:0,4:0,3:0,2:0,1:0};
+    allData.forEach(function(r){ counts[r.rating]++; });
+    container.innerHTML = '';
+    [5,4,3,2,1].forEach(function(r) {
+      var pct = total > 0 ? (counts[r] / total * 100).toFixed(1) : 0;
+      var row = document.createElement('div');
+      row.className = 'rbar-row';
+      row.innerHTML = '<span class="rbar-label">' + r + '\u2605</span>'
+        + '<span class="rbar-word">' + ratingWords[r] + '</span>'
+        + '<div class="rbar-track"><div class="rbar-fill" data-pct="' + pct + '"></div></div>'
+        + '<span class="rbar-count">' + counts[r] + '</span>';
+      container.appendChild(row);
+    });
+    setTimeout(function() {
+      container.querySelectorAll('.rbar-fill').forEach(function(el) {
+        el.style.width = el.dataset.pct + '%';
+      });
+    }, 80);
+  }
+
+  // ── Event Filter ──────────────────────────────
+  function populateEventFilter() {
+    var events  = [];
+    allData.forEach(function(r) { if (events.indexOf(r.event) === -1) events.push(r.event); });
+    events.sort();
+    var sel = document.getElementById('filterEvent');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All Events</option>';
+    events.forEach(function(ev) {
+      var o = document.createElement('option');
+      o.value = ev; o.textContent = ev;
+      if (ev === current) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  // ── Filter + Sort ─────────────────────────────
+  function getFiltered() {
+    return allData.filter(function(r) {
+      var q = searchQ.toLowerCase();
+      return (!q || r.name.toLowerCase().indexOf(q) !== -1 || r.studentId.toLowerCase().indexOf(q) !== -1)
+          && (!filterEvt  || r.event === filterEvt)
+          && (!filterRate || r.rating === parseInt(filterRate, 10));
+    }).sort(function(a,b) {
+      var va = a[sortKey], vb = b[sortKey];
+      if (sortKey === 'timestamp') { va = new Date(va); vb = new Date(vb); }
+      if (typeof va === 'string') return va.localeCompare(vb) * sortDir;
+      return (va - vb) * sortDir;
+    });
+  }
+
+  // ── Table ─────────────────────────────────────
+  function renderTable() {
+    var rows  = getFiltered();
+    var tbody = document.getElementById('tableBody');
+    var empty = document.getElementById('emptyState');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (rows.length === 0) {
+      if (empty) {
+        empty.style.display = 'block';
+        var et = document.getElementById('emptyTitle');
+        var em = document.getElementById('emptyMsg');
+        if (et) et.textContent = allData.length === 0 ? 'NO FEEDBACK YET' : 'NO RESULTS FOUND';
+        if (em) em.textContent = allData.length === 0 ? '// RESPONSES FROM THE FORM WILL APPEAR HERE' : '// TRY ADJUSTING FILTERS';
+      }
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    rows.forEach(function(row, i) {
+      var ts    = new Date(row.timestamp);
+      var tsFmt = ts.toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      var tr    = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="badge-num">' + (i+1) + '</td>'
+        + '<td><div class="student-name">' + esc(row.name) + '</div></td>'
+        + '<td><span class="student-id">' + esc(row.studentId) + '</span></td>'
+        + '<td><div class="event-name" title="' + esc(row.event) + '">' + esc(row.event) + '</div></td>'
+        + '<td><span class="r-badge r' + row.rating + '">' + starSyms[row.rating] + ' ' + ratingWords[row.rating] + '</span></td>'
+        + '<td><span class="ts">' + tsFmt + '</span></td>'
+        + '<td><button class="btn-del" data-id="' + row.id + '">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.btn-del').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = parseInt(btn.dataset.id, 10);
+        showConfirm('DELETE ENTRY', 'Remove this feedback entry permanently?', function() {
+          allData = allData.filter(function(r){ return r.id !== id; });
+          saveData(); refresh();
+          showToast('Entry deleted', '#e63946');
+        });
+      });
+    });
+  }
+
+  // ── Sort headers ──────────────────────────────
+  document.querySelectorAll('th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var key = th.dataset.sort;
+      if (sortKey === key) sortDir *= -1;
+      else { sortKey = key; sortDir = -1; }
+      document.querySelectorAll('th[data-sort]').forEach(function(h){ h.classList.remove('sorted'); });
+      th.classList.add('sorted');
+      var arrow = th.querySelector('.sort-arrow');
+      if (arrow) arrow.textContent = sortDir === -1 ? '\u2193' : '\u2191';
+      renderTable();
+    });
+  });
+
+  // ── Filter inputs ─────────────────────────────
+  var searchBox    = document.getElementById('searchBox');
+  var filterEvent  = document.getElementById('filterEvent');
+  var filterRating = document.getElementById('filterRating');
+  if (searchBox)    searchBox.addEventListener('input',    function(e){ searchQ    = e.target.value; renderTable(); });
+  if (filterEvent)  filterEvent.addEventListener('change', function(e){ filterEvt  = e.target.value; renderTable(); });
+  if (filterRating) filterRating.addEventListener('change',function(e){ filterRate = e.target.value; renderTable(); });
+
+  // ── Clear All ─────────────────────────────────
+  var clearBtn = document.getElementById('clearAllBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      if (allData.length === 0) { showToast('Nothing to clear', '#555'); return; }
+      showConfirm('CLEAR ALL DATA',
+        'Permanently delete all ' + allData.length + ' feedback entries?',
+        function() { allData = []; saveData(); refresh(); showToast('All feedback cleared', '#e63946'); }
+      );
+    });
+  }
+
+  // ── Export CSV ────────────────────────────────
+  var exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      var rows = getFiltered();
+      if (rows.length === 0) { showToast('No data to export', '#555'); return; }
+      var header = ['#','Student Name','Student ID','Event','Rating','Rating Label','Submitted At'];
+      var lines  = [header.join(',')];
+      rows.forEach(function(r, i) {
+        var ts = new Date(r.timestamp).toLocaleString('en-IN');
+        lines.push([i+1,'"'+r.name+'"',r.studentId,'"'+r.event+'"',r.rating,ratingWords[r.rating],'"'+ts+'"'].join(','));
+      });
+      var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href = url; a.download = 'kju_feedback_' + Date.now() + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Exported ' + rows.length + ' rows', '#4ade80');
+    });
+  }
+
+  // ── Confirm Modal ─────────────────────────────
+  var _confirmCb = null;
+  function showConfirm(title, msg, cb) {
+    var el = document.getElementById('confirmModal');
+    var t  = document.getElementById('modalTitle');
+    var m  = document.getElementById('modalMsg');
+    if (t) t.textContent = title;
+    if (m) m.textContent = msg;
+    if (el) el.style.display = 'flex';
+    _confirmCb = cb;
+  }
+  var cancelBtn  = document.getElementById('modalCancel');
+  var confirmBtn = document.getElementById('modalConfirm');
+  if (cancelBtn)  cancelBtn.addEventListener('click',  function(){ document.getElementById('confirmModal').style.display='none'; });
+  if (confirmBtn) confirmBtn.addEventListener('click', function(){ document.getElementById('confirmModal').style.display='none'; if (_confirmCb) _confirmCb(); });
+
+  // ── Toast ─────────────────────────────────────
+  var _toastTimer = null;
+  function showToast(msg, color) {
+    color = color || '#4ade80';
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.innerHTML = '<div class="toast-dot" style="background:' + color + '"></div><span>' + msg + '</span>';
+    t.style.display = 'flex';
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function(){ t.style.display = 'none'; }, 2800);
+  }
+
+  // ── Escape HTML ───────────────────────────────
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  // ── Main refresh ──────────────────────────────
+  function refresh() {
+    loadData();
+    renderStats();
+    renderRatingBars();
+    renderCharts();
+    populateEventFilter();
+    renderTable();
+  }
+
+  refresh();
+  setInterval(refresh, 10000);
+
+  </script>
+</body>
+</html>
